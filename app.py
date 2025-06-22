@@ -71,18 +71,21 @@ def generate_mock_images(digit, num_images=5):
     
     return images
 
-# Function to load the trained model (placeholder)
+# Function to load the trained model
 @st.cache_resource
 def load_model():
     """Load the trained GAN model"""
     try:
-        # In a real implementation, you would load your trained model here
-        # checkpoint = torch.load('mnist_gan_model.pth', map_location='cpu')
-        # model = Generator(100, 10, 28, 1)
-        # model.load_state_dict(checkpoint['generator_state_dict'])
-        # model.eval()
-        # return model
-        return None  # Placeholder
+        checkpoint = torch.load('mnist_gan_model.pth', map_location='cpu')
+        model = Generator(
+            z_dim=checkpoint['z_dim'],
+            num_classes=checkpoint['num_classes'], 
+            img_size=checkpoint['img_size'],
+            channels=checkpoint['channels']
+        )
+        model.load_state_dict(checkpoint['generator_state_dict'])
+        model.eval()
+        return model
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
@@ -105,13 +108,15 @@ def generate_digit_images(digit, num_images=5, model=None):
         
         # Convert to PIL images
         generated_imgs = generated_imgs.cpu().numpy()
-        generated_imgs = (generated_imgs + 1) / 2.0  # Denormalize
+        generated_imgs = (generated_imgs + 1) / 2.0  # Denormalize from [-1,1] to [0,1]
         generated_imgs = np.clip(generated_imgs, 0, 1)
         
         images = []
         for img in generated_imgs:
             img_array = (img.squeeze() * 255).astype(np.uint8)
             pil_img = Image.fromarray(img_array, mode='L')
+            # Resize for better display (28x28 is quite small)
+            pil_img = pil_img.resize((112, 112), Image.NEAREST)
             images.append(pil_img)
         
         return images
@@ -124,8 +129,10 @@ def main():
     # Load model
     model = load_model()
     
-    if model is None:
-        st.info("🔄 Using demo mode. In production, this would use a trained GAN model.")
+    if model is not None:
+        st.success("✅ GAN model loaded successfully!")
+    else:
+        st.warning("⚠️ Using demo mode. Make sure 'mnist_gan_model.pth' is in your repository.")
     
     # Digit selection
     st.markdown("#### Select a digit to generate (0-9)")

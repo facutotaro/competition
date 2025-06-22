@@ -161,7 +161,7 @@ def main():
                     
                     for i, (col, img) in enumerate(zip(img_cols, images)):
                         with col:
-                            st.image(img, caption=f"Image {i+1}", use_column_width=True)
+                            st.image(img, caption=f"Image {i+1}", use_container_width=True)
                     
                     # Display additional info
                     st.markdown("---")
